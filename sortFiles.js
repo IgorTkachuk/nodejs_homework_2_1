@@ -1,3 +1,4 @@
+const util = require('util');
 const fs = require('fs');
 const fx = require('mkdir-recursive');
 const path = require('path');
@@ -36,6 +37,8 @@ var rmdir = function(dir) {
 	fs.rmdirSync(dir);
 };
 
+const promisifiedCopyFile = util.promisify(fs.copyFile);
+
 const sortFiles = (fsPath = __dirname,  targetDir = path.join(__dirname, 'sort') ) => {
     const files = fs.readdirSync(fsPath);
     
@@ -52,11 +55,12 @@ const sortFiles = (fsPath = __dirname,  targetDir = path.join(__dirname, 'sort')
             if (!fs.existsSync(path.join(targetDir, file.substr(0,1)))) {
                 fx.mkdirSync(path.join(targetDir, file.substr(0,1)));
             }
-            fs.copyFile(path.join(fsPath, file), path.join(targetDir, file.substr(0,1), file), err => {
-                if (err) {
-                    console.log(`Error copy file ${logString}`);
-                }
+            promisifiedCopyFile(path.join(fsPath, file), path.join(targetDir, file.substr(0,1), file))
+            .then(() => {
                 console.log(logString);
+            })
+            .catch((err) => {
+                console.log(`Error copy file ${logString}`);
             });
         } 
     });
